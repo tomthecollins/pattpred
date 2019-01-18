@@ -1,0 +1,19 @@
+{
+  "name": "pattpred",
+  "version": "0.0.0",
+  "description": "Generating (from existing pieces) training and test data for MIREX 2018 Patterns for Prediction task.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomthecollins/pattpred.git"
+  },
+  "author": "Tom Collins, Berit Janssen, and Iris Yuping Ren",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/tomthecollins/pattpred#readme",
+  "dependencies": {
+    "csv-stringify": "^3.1.1",
+    "maia-util": "^0.2.1",
+    "midiconvert": "^0.4.2",
+    "seed-random": "^2.2.0",
+    "uuid": "^3.1.0"
+  }
+}

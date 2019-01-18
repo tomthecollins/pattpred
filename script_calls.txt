@@ -1,0 +1,29 @@
+For the pattpred training data generation
+
+MONO/POLY AUD/SYM SMALL/MEDIUM
+
+Unzip subdir_template.zip and move to appropriate directory of, e.g., ~/tomthecollins/Shizz/Lehigh/Projects/MIREX/2018/20180918/PPDD-Sep2018/
+
+Randomly select subset of Lakh MIDI Dataset
+E.g., run choosing_lakh_files_small.lisp in Clozure CL
+Make sure the audio/symbolic and monophonic/polyphonic path files are defined appropriately (I did not bother remaking this script for each variant of those)
+
+Generate prime/continuation CSV files
+E.g., run
+node generate_train/midi2prime_cont_mono_small.js -u 'tom'
+at the Terminal. If making an aud variant, copy/paste corresponding files from the sym variant.
+
+Convert CSV files to MIDI files
+Run csv2midi_mono_small.lisp in Clozure CL
+If making an aud variant, copy/paste corresponding files from the sym variant.
+
+If making an aud variant, convert CSV files to WAV files
+Run csv2wav_prime_cont_mono_small.m in Matlab
+
+Compress and upload to Drive using regular Mac zip compression
+Remove the orig_midi folder, compress again, and upload to tomcollinsresearch.net using FileZilla.
+
+
+LARGE
+Same as above, apart from (1) Lakh file selection is handled by the node script, and (2) compression is achieved using p7zip (https://www.mankier.com/1/7za), installed via "brew install p7zip on Mac". E.g., the script call is something like
+7za a PPDD-Sep2018_sym_mono_large.zip PPDD-Sep2018_sym_mono_large

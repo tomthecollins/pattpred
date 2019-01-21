@@ -1,15 +1,15 @@
 #| Copyright Tom Collins 18/7/2018
 
-This script selects 5800 songs at random from the Lakh
+This script selects 6000 songs at random from the Lakh
 dataset and copies them to a folder. What we really want
-is a dataset of size 1000 -- hopefully 5800 should be
+is a dataset of size 1000 -- hopefully 6000 should be
 enough with some input not turning into output. |#
 
 (setq
  *rs*
  #.(CCL::INITIALIZE-MRG31K3P-STATE 2114456260 46916995
     292469660 407061270 240491402 2135438499))
-(setq randn 5800)
+(setq randn 6000)
 (setq
  *lakh-dir*
  (make-pathname

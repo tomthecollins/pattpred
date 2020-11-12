@@ -8,7 +8,8 @@ var mInPaths = {
 // Requires.
 var fs = require('fs')
 var mu = require('maia-util')
-var mc = require('midiconvert')
+// var mc = require('midiconvert')
+var { Midi } = require('@tonejs/midi')
 var uu = require('uuid/v4')
 var sr = require('seed-random')
 var fs = require('fs')
@@ -113,7 +114,7 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
   })
   var countFiles = 0;
   console.log("mFiles.length:", mFiles.length)
-  // mFiles = mFiles.slice(0, 20);
+  // mFiles = mFiles.slice(0, 1);
   mFiles.forEach(function (mFile, iFile){
     if (countFiles >= params.nFile){
       if (!endAnnouncementMade){
@@ -127,10 +128,18 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
       console.log('!!! FILE ' + (iFile + 1) + ' OF ' + mFiles.length + ' !!!')
       comp['id'] = uu();
       console.log('id:', comp.id)
-      var midiBlob = fs.readFileSync(mInPath + 'orig_midi/' + mFile, "binary")
-      var midi = mc.parse(midiBlob)
-      midi.header.bpm = Math.round(midi.header.bpm * 10) / 10
-      console.log('midi.header:', midi.header);
+      // New MIDI I/O library
+      var midiData = fs.readFileSync(mInPath + 'orig_midi/' + mFile);
+      var midi = new Midi(midiData)
+
+      // Old using midiconvert
+      // var midiBlob = fs.readFileSync(mInPath + 'orig_midi/' + mFile, "binary")
+      // var midi = mc.parse(midiBlob)
+
+      var bpm = Math.round(midi.header.tempos[0].bpm * 10) / 10
+      // midi.header.bpm = Math.round(midi.header.bpm * 10) / 10
+      // console.log('midi.header:', midi.header)
+
       // comp['id'] = uu()
       // comp['id'] = 'hello';
       // Strip off file extension.
@@ -171,12 +180,9 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
       // Given midi.duration is the length of the MIDI file in seconds, we want
       // 35-sec primes and 10-ontime continuations, pStarts is the upper limit
       // on where a possible excerpt may start.
-      var pStarts = midi.duration - params.primeLength - 4*params.contLength*60/midi.header.bpm
+      var pStarts = midi.duration - params.primeLength - 4*params.contLength*60/bpm
       var startTime = Math.random() * pStarts // Selects start time at random.
       var endTime = startTime + params.primeLength
-      // Not sure what maxTime and minTime are doing just yet.
-      var maxTime = Number.MIN_SAFE_INTEGER
-      var minTime = Number.MAX_SAFE_INTEGER
       // console.log('midi.duration:', midi.duration);
       // console.log('startTime:', startTime);
       // console.log('endTime:', endTime);
@@ -228,9 +234,10 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
           // Get the track.notes and quantise them.
           var ps = track.notes.map(function(note){
             return [
-              note.time*midi.header.bpm/60,
+              note.time*bpm/60,
               note.midi,
-              note.duration*midi.header.bpm/60
+              note.duration*bpm/60,
+              note.velocity
             ];
           }).filter(function(p){ // Gets rid of really low/high notes.
             return p[1] >= 21 && p[1] <= 108;
@@ -272,6 +279,7 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
             // compNote['MPN'] = 0
             compNote['staffNo'] = layerNum
             compNote['voiceNo'] = 0
+            compNote['velocity'] = p[3]
             compNote['isPerc'] = track.isPercussion || false
             return compNote
           }))
@@ -311,7 +319,7 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
       })
       comp['notes'] = notes.sort(mu.sort_points_asc);
       comp['sequencing'] = [{'ontime': 0, 'offtime': 16, 'repetitionNo': 1}]
-      comp['tempi'] = [{'barNo': 1, 'ontime': 0, 'bpm': midi.header.bpm, 'tempo': ""}]
+      comp['tempi'] = [{'barNo': 1, 'ontime': 0, 'bpm': bpm, 'tempo': ""}]
     }
     catch (e) {
       console.log(e)
@@ -319,11 +327,11 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
 
     // Restrict notes to time range of interest.
     if (midi === undefined || midi.header === undefined){
-      console.log('Could not parse MIDI file using midiconvert.');
+      console.log('Could not parse MIDI file.');
       return;
     }
-    var prime1stOn = startTime*midi.header.bpm/60;
-    var primeLstOn = endTime*midi.header.bpm/60;
+    var prime1stOn = startTime*bpm/60;
+    var primeLstOn = endTime*bpm/60;
     comp.prime = comp.notes.filter(function(note){
       return note.ontime >= prime1stOn && note.ontime <= primeLstOn;
     });
@@ -564,7 +572,7 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
             var descr = {
               "id": comp.id,
               "idLakh": comp.idLakh,
-              "bpm": midi.header.bpm,
+              "bpm": bpm,
               "timeSignature": midi.header.timeSignature,
               "keyEstimate": keySig[0]
             };
@@ -576,6 +584,9 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
             write2csv(comp.prime, mInPath, 'prime_csv', comp.id);
             write2csv(cont, mInPath, 'cont_true_csv', comp.id);
             write2csv(foil, mInPath, 'cont_foil_csv', comp.id);
+            write2midi(comp.prime, mInPath, 'prime_midi', comp.id)
+            write2midi(cont, mInPath, 'cont_true_midi', comp.id)
+            write2midi(foil, mInPath, 'cont_foil_midi', comp.id)
             countFiles++;
           }
           else {
@@ -595,6 +606,29 @@ sr('harrykane', {global: true}); // Overrides global Math.random.
 
   })
 // })
+
+
+function write2midi(notes, path, folder, filename){
+  // Save points as a MIDI file and state-context pairs as a text file.
+  let midi = new Midi()
+  let track = midi.addTrack()
+
+  // Calculate min ontime.
+  const minOn = mu.min_argmin(notes.map(function(n){ return n.ontime }))[0]
+  notes.forEach(function(n){
+    track.addNote({
+      midi: n.MNN,
+      time: n.ontime - minOn,
+      duration: n.duration,
+      velocity: 0.84
+    })
+  })
+  // console.log("track:", track)
+  fs.writeFileSync(
+    path + folder + '/' + filename + '.mid',
+    new Buffer(midi.toArray())
+  )
+}
 
 
 function write2csv(notes, path, folder, filename){

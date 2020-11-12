@@ -11,8 +11,8 @@
   "homepage": "https://github.com/tomthecollins/pattpred#readme",
   "dependencies": {
     "csv-stringify": "^3.1.1",
+    "@tonejs/midi": "^2.0.15",
     "maia-util": "^0.2.25",
-    "midiconvert": "^0.4.2",
     "seed-random": "^2.2.0",
     "uuid": "^3.1.0"
   }

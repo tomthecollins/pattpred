@@ -2,13 +2,12 @@ node_modules
 npm-debug.log
 *.orig
 
-# all midi files
+# Data files
 *.mid
 *.midi
-# all wav files
 *.wav
-# all mp3 files
 *.mp3
+*.csv
 
 # OS generated files
 .DS_Store

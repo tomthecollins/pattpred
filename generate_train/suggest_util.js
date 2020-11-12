@@ -135,7 +135,7 @@ module.exports = {
     var MNN_unq = mu.get_unique(MNN.sort(function (a, b) {
       return a - b;
     }));
-    
+
     return beat_round + '|' + MNN_unq;
   }
 }
@@ -171,7 +171,7 @@ function getPointsFromStatesUnpitched(states, currentTimeSignature) {
   //states.map(function(state) {console.log("origPoints", state.origPoints)});
   // console.log("states",states);
   // console.log("state_durs" , state_durs);
-  
+
   var unique_times = [0];
   for (stati = 0; stati < states.length; stati++) {
     unique_times.push(unique_times[stati] + state_durs[stati]);
@@ -255,8 +255,9 @@ function state_durations_by_beat(states, crotchet_beats_in_bar) {
   return mod_state_durations;
 }
 
-function state_note_abs2point_by_lookup(notei, statj, half_states, state_durs,
-                                        unique_times) {
+function state_note_abs2point_by_lookup(
+  notei, statj, half_states, state_durs, unique_times
+){
   // Tom Collins 6/4/2016.
   // The ith note of the jth half-state is transformed into a so-called point,
   // meaning we find its ontime (the jth element of the unique times), its MIDI
